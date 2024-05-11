@@ -24,9 +24,16 @@ async function run() {
 
     const foodCollection = client.db('merakiDB').collection('foods');
 
+    // load all available foods for available foods page
+    app.get('/foods', async(req, res)=>{
+      const cursor = foodCollection.find({status: "Available"}) ;
+      // const query = {status: new ObjectId("Available")}
+      const result = await cursor.toArray();
+      console.log(result);
+      res.send(result);
+    })
 
-
-    // load foods for featured section in homepage
+    // load sorted and selected foods for featured section in homepage
     app.get('/foods', async(req, res)=>{
       const cursor = foodCollection.find().sort( { "quantity": -1 }).limit(6) ;
       const result = await cursor.toArray();
