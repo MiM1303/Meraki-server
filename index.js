@@ -26,9 +26,9 @@ async function run() {
 
 
 
-    // load countries data
+    // load foods for featured section in homepage
     app.get('/foods', async(req, res)=>{
-      const cursor = foodCollection.find();
+      const cursor = foodCollection.find().sort( { "quantity": -1 }).limit(6) ;
       const result = await cursor.toArray();
       console.log(result);
       res.send(result);
