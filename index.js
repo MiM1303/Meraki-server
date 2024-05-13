@@ -24,8 +24,16 @@ async function run() {
 
     const foodCollection = client.db('merakiDB').collection('foods');
 
+      // load sorted and selected foods for featured section in homepage
+      app.get('/food', async(req, res)=>{
+        const cursor = foodCollection.find().sort( { "quantity": -1 }).limit(6) ;
+        const result = await cursor.toArray();
+        console.log(result);
+        res.send(result);
+      })
+
     // load all available foods for available foods page
-    app.get('/food', async(req, res)=>{
+    app.get('/available-foods', async(req, res)=>{
       const cursor = foodCollection.find({status: "Available"}) ;
       // const query = {status: new ObjectId("Available")}
       const result = await cursor.toArray();
@@ -73,13 +81,7 @@ async function run() {
   })
   
 
-    // load sorted and selected foods for featured section in homepage
-    app.get('/food', async(req, res)=>{
-      const cursor = foodCollection.find().sort( { "quantity": -1 }).limit(6) ;
-      const result = await cursor.toArray();
-      console.log(result);
-      res.send(result);
-    })
+  
 
 
     // add food from add food page
