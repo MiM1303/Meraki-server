@@ -69,6 +69,38 @@ async function run() {
       res.send(result);
     })
 
+    // get food by id for updating in manage in food
+    app.get('/my-foods/:id', async(req, res)=>{
+      const id = req.params.id;
+      console.log('id found in server:',req.params.id);
+      const query = {_id: new ObjectId(id)}
+      const result = await foodCollection.findOne(query);
+      console.log(result);
+      res.send(result);
+    })
+
+    // update food by id in manage in food
+    app.put('/my-foods/:id', async (req, res) => {
+      const id = req.params.id;
+      const filter = {_id: new ObjectId(id)};
+      const options = {upsert:true};
+      const updatedFood = req.body
+      console.log(updatedFood);
+      const food = {
+          $set:{
+              name: updatedFood.name,
+              photo: updatedFood.photo,
+              quantity: updatedFood.quantity,
+              location: updatedFood.location,
+              date: updatedFood.date,
+              notes: updatedFood.notes
+          }
+      }
+  
+      const result = await foodCollection.updateOne(filter, food, options)
+      res.send(result);
+  })
+
     // request food by id from food details page
     app.put('/food/:id', async (req, res) => {
       const id = req.params.id;
