@@ -43,6 +43,25 @@ async function run() {
       res.send(result);
     })
 
+    // request food by id from food details page
+    app.put('/food/:id', async (req, res) => {
+      const id = req.params.id;
+      const filter = {_id: new ObjectId(id)};
+      const options = {upsert:true};
+      const updatedFood = req.body
+      console.log(updatedFood);
+      const food = {
+          $set:{
+              notes: updatedFood.notes, 
+              status: updatedFood.status
+          }
+      }
+  
+      const result = await foodCollection.updateOne(filter, food, options)
+      res.send(result);
+  })
+  
+
     // load sorted and selected foods for featured section in homepage
     app.get('/food', async(req, res)=>{
       const cursor = foodCollection.find().sort( { "quantity": -1 }).limit(6) ;
