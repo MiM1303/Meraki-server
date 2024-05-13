@@ -102,6 +102,14 @@ async function run() {
       res.send(result);
   })
 
+  // delete food from manage my foods
+  app.delete('/food/:id', async(req, res)=>{
+    const id = req.params.id;
+    const query = {_id:new ObjectId(id)}
+    const result = await foodCollection.deleteOne(query);
+    res.send(result);
+  })
+
 
 
 
