@@ -50,6 +50,15 @@ async function run() {
       res.send(result);
     })
 
+    // load all requested foods for my requested foods page
+    app.get('/my-foods/:email', async(req, res)=>{
+      const myEmail = req.params.email;
+      // const cursor = foodCollection.find({status: "Requested"}) ;
+      const result = await foodCollection.find({userEmail:myEmail}).toArray();
+      console.log(result);
+      res.send(result);
+    })
+
     // get food by id for showing food details
     app.get('/food/:id', async(req, res)=>{
       const id = req.params.id;
