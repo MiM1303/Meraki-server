@@ -33,6 +33,15 @@ async function run() {
       res.send(result);
     })
 
+    // load all requested foods for my requested foods page
+    app.get('/requested-foods/:email', async(req, res)=>{
+      const userEmail = req.params.email;
+      // const cursor = foodCollection.find({status: "Requested"}) ;
+      const result = await foodCollection.find({requester:userEmail}).toArray();
+      console.log(result);
+      res.send(result);
+    })
+
     // get food by id for showing food details
     app.get('/food/:id', async(req, res)=>{
       const id = req.params.id;
@@ -53,7 +62,9 @@ async function run() {
       const food = {
           $set:{
               notes: updatedFood.notes, 
-              status: updatedFood.status
+              status: updatedFood.status,
+              requester: updatedFood.requester,
+              requestDate: updatedFood.requestDate
           }
       }
   
