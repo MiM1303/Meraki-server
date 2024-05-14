@@ -41,6 +41,19 @@ async function run() {
       res.send(result);
     })
 
+    // sorting
+    app.get('/available-foods/sorted/:sort', async(req, res)=>{
+      const sortOrder = req.params.sort;
+      console.log(sortOrder);
+
+      const query = {status: "Available"};
+      if(sortOrder) options = {sort: {date : sortOrder === 'asc'?1 : -1}}
+      const result = await foodCollection.find(query, options).toArray();
+
+      console.log(result);
+      res.send(result);
+    })
+
     // load all requested foods for my requested foods page
     app.get('/requested-foods/:email', async(req, res)=>{
       const userEmail = req.params.email;
