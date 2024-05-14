@@ -54,6 +54,25 @@ async function run() {
       res.send(result);
     })
 
+    // searching
+    app.get('/available-foods/search/:searchText', async(req, res)=>{
+      const searchText = req.params.searchText;
+      console.log(searchText);
+
+      
+      const query = {
+        name: {$regex: searchText, $options: 'i'},
+        status: {$regex: 'Available', $options: 'i'}
+      };
+      
+      const cursor = foodCollection.find(query) ;
+      const result = await cursor.toArray();
+      // const result = await cursor.find(query).toArray();
+
+      console.log(result);
+      res.send(result);
+    })
+
     // load all requested foods for my requested foods page
     app.get('/requested-foods/:email', async(req, res)=>{
       const userEmail = req.params.email;
