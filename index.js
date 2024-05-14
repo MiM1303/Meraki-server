@@ -1,12 +1,60 @@
 const express = require('express');
 const cors = require('cors');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const jwt = require('jsonwebtoken');
 require('dotenv').config();
+const cookieParser = require('cookie-parser');
+
+
 const app = express();
 const port = process.env.PORT || 5000;
 
+// MIDDLEWARES
+// app.use(cors({
+//   origin: [
+//     'http://localhost:5173'
+//   ],
+//   credentials: true
+// }));
+// app.use(express.json());
+// app.use(cookieParser());
+
+app.use(cors({
+  origin: [
+    'http://localhost:5173',
+  ],
+  credentials: true,
+  optionSuccessStatus: 200
+}));
 app.use(express.json());
-app.use(cors());
+app.use(cookieParser());
+
+const cookieOptions = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+};
+
+// const logger = (req, res, next)=>{
+//   console.log('log info', req.method, req.url);
+//   next();
+// }
+
+const verifyToken = (req, res, next) =>{
+  const token = req?.cookies?.token;
+  console.log('token in the middleware', token);
+  if(!token){
+    return res.status(401).send({message: "unauthorized access"});
+  }
+  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded)=>{
+    if(err){
+      return res.status(401).send({message: "unauthorized access"});
+    }
+    req.user = decoded;
+    next();
+  })
+}
+
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.0pky6me.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
@@ -23,6 +71,40 @@ async function run() {
   try {
 
     const foodCollection = client.db('merakiDB').collection('foods');
+
+
+    // JWT GENERATE
+    // app.post('/jwt', async (req, res)=>{
+    //   const user = req.body;
+    //   console.log('user for token', user);
+    //   const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1d' })
+
+    //   res.cookie('token', token, cookieOptions)
+    //   .send({success: true});
+    // })
+
+    // app.post('/logout',  async(req, res)=>{
+    //   const user = req.body;
+    //   // console.log('logging out', user)
+    //   // res.clearCookie('token', {maxAge: 0}).send({success:true})
+    //   res.clearCookie('token', { ...cookieOptions, maxAge: 0 }).send({success:true})
+    // })
+
+    //JWT
+    app.post('/jwt', async(req, res)=>{
+      const user = req.body;
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {expiresIn: '1hr'});
+      res
+      .cookie('token',token,cookieOptions)
+      .send({success: true});
+    })
+
+    app.post('/logout', async(req, res)=>{
+      res.clearCookie('token', {...cookieOptions, maxAge: 0}).send({success: true})
+    })
+
+
+    // SERVICES APIs
 
       // load sorted and selected foods for featured section in homepage
       app.get('/food', async(req, res)=>{
@@ -74,25 +156,43 @@ async function run() {
     })
 
     // load all requested foods for my requested foods page
-    app.get('/requested-foods/:email', async(req, res)=>{
+    app.get('/requested-foods/:email',  verifyToken, async(req, res)=>{
       const userEmail = req.params.email;
       // const cursor = foodCollection.find({status: "Requested"}) ;
+      console.log(req.user.email, req.params.email)
+      console.log('token owner info', req.user);
+      if(req.user.email !== req.params.email){
+        return res.status(403).send({message: 'forbidden access'})
+      }
+      let query = {};
+      if(req.query?.email){
+        query = {email: req.query.email}
+      }
       const result = await foodCollection.find({requester:userEmail}).toArray();
       console.log(result);
       res.send(result);
     })
 
-    // load all requested foods for my requested foods page
-    app.get('/my-foods/:email', async(req, res)=>{
+    // load all foods for user in manage my foods page
+    app.get('/my-foods/:email', verifyToken, async(req, res)=>{
       const myEmail = req.params.email;
-      // const cursor = foodCollection.find({status: "Requested"}) ;
+      console.log(req.user.email, req.params.email)
+      console.log('token owner info', req.user);
+      if(req.user.email !== req.params.email){
+        return res.status(403).send({message: 'forbidden access'})
+      }
+      let query = {};
+      if(req.query?.email){
+        query = {email: req.query.email}
+      }
       const result = await foodCollection.find({userEmail:myEmail}).toArray();
-      console.log(result);
+      // console.log(result);
+      
       res.send(result);
     })
 
     // get food by id for showing food details
-    app.get('/food/:id', async(req, res)=>{
+    app.get('/food/:id',  async(req, res)=>{
       const id = req.params.id;
       console.log('id found in server:',req.params.id);
       const query = {_id: new ObjectId(id)}
@@ -101,7 +201,7 @@ async function run() {
       res.send(result);
     })
 
-    // get food by id for updating in manage in food
+    // get food by id for updating in manage my food
     app.get('/my-foods/:id', async(req, res)=>{
       const id = req.params.id;
       console.log('id found in server:',req.params.id);
@@ -158,7 +258,9 @@ async function run() {
 
 
     // add food from add food page
-    app.post('/add-food', async(req, res)=>{
+    app.post('/add-food',  verifyToken, async(req, res)=>{
+
+
       const newFood = req.body;
       console.log(newFood);
 
