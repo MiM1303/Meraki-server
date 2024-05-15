@@ -202,7 +202,7 @@ async function run() {
     })
 
     // get food by id for updating in manage my food
-    app.get('/my-foods/:id', async(req, res)=>{
+    app.get('/my-foods/update/:id', async(req, res)=>{
       const id = req.params.id;
       console.log('id found in server:',req.params.id);
       const query = {_id: new ObjectId(id)}
@@ -212,7 +212,7 @@ async function run() {
     })
 
     // update food by id in manage in food
-    app.put('/my-foods/:id', async (req, res) => {
+    app.put('/my-foods/update/:id', async (req, res) => {
       const id = req.params.id;
       const filter = {_id: new ObjectId(id)};
       const options = {upsert:true};
