@@ -22,6 +22,8 @@ const port = process.env.PORT || 5000;
 app.use(cors({
   origin: [
     'http://localhost:5173',
+    'https://meraki-4207e.web.app',
+    'https://meraki-4207e.firebaseapp.com'
   ],
   credentials: true,
   optionSuccessStatus: 200
@@ -32,7 +34,7 @@ app.use(cookieParser());
 const cookieOptions = {
   httpOnly: true,
   secure: process.env.NODE_ENV === "production",
-  sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+  sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
 };
 
 // const logger = (req, res, next)=>{
@@ -156,7 +158,7 @@ async function run() {
     })
 
     // load all requested foods for my requested foods page
-    app.get('/requested-foods/:email',  verifyToken, async(req, res)=>{
+    app.get('/requested-foods/:email', verifyToken, async(req, res)=>{
       const userEmail = req.params.email;
       // const cursor = foodCollection.find({status: "Requested"}) ;
       console.log(req.user.email, req.params.email)
@@ -258,9 +260,7 @@ async function run() {
 
 
     // add food from add food page
-    app.post('/add-food',  verifyToken, async(req, res)=>{
-
-
+    app.post('/add-food', async(req, res)=>{
       const newFood = req.body;
       console.log(newFood);
 
@@ -282,9 +282,9 @@ async function run() {
 
 
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    // await client.connect();
     // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
+    // await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
     // Ensures that the client will close when you finish/error
