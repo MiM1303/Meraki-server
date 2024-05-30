@@ -73,6 +73,8 @@ async function run() {
   try {
 
     const foodCollection = client.db('merakiDB').collection('foods');
+    const reviewCollection = client.db('merakiDB').collection('reviews');
+    const donorCollection = client.db('merakiDB').collection('donors');
 
 
     // JWT GENERATE
@@ -157,6 +159,14 @@ async function run() {
       res.send(result);
     })
 
+    // get reviews to display in homepage
+    app.get('/reviews', async(req, res)=>{
+      const cursor = reviewCollection.find();
+      const result = await cursor.toArray();
+      console.log(result);
+      res.send(result);
+    })
+
     // load all requested foods for my requested foods page
     app.get('/requested-foods/:email', verifyToken, async(req, res)=>{
       const userEmail = req.params.email;
@@ -213,6 +223,14 @@ async function run() {
       res.send(result);
     })
 
+    // get top food donor data
+    app.get('/donors', async (req, res) => {
+      const cursor = donorCollection.find().sort( { "donationCount": -1 }).limit(3);
+      const result = await cursor.toArray();
+      // console.log(result);
+      res.send(result);
+    });
+
     // update food by id in manage in food
     app.put('/my-foods/update/:id', async (req, res) => {
       const id = req.params.id;
@@ -257,15 +275,43 @@ async function run() {
   
 
   
+  // add donor to donor collection when registering
+  app.post('/donors', async (req, res) => {
+    const user = req.body;
+    // insert email if user doesnt exists: 
+    // you can do this many ways (1. email unique, 2. upsert 3. simple checking)
+    const query = { email: user.email }
+    const existingUser = await donorCollection.findOne(query);
+    if (existingUser) {
+      return res.send({ message: 'user already exists', insertedId: null })
+    }
+    const result = await donorCollection.insertOne(user);
+    res.send(result);
+  });
 
 
     // add food from add food page
     app.post('/add-food', async(req, res)=>{
       const newFood = req.body;
-      console.log(newFood);
+      // console.log(newFood);
 
       const result = await foodCollection.insertOne(newFood);
+
+      const updateDoc = {
+        $inc: {donationCount: 1},
+      }
+      const donorQuery = {email: newFood.userEmail};
+      const updatedDonationCount = await donorCollection.updateOne(donorQuery, updateDoc);
       res.send(result);
+  })
+
+  // add review from home page
+  app.post('/reviews', async(req, res)=>{
+    const newReview = req.body;
+    // console.log(newFood);
+
+    const result = await reviewCollection.insertOne(newReview);
+    res.send(result);
   })
 
   // delete food from manage my foods
